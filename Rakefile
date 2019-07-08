@@ -3,20 +3,35 @@ PROVIDER = 'virtualbox'
 BOX_NAMESPACE = 'mcandre'
 
 BOX_BASENAME = 'mucus'
+BOX_BASENAME_ARM64 = "#{BOX_BASENAME}-arm64"
 BOX_BASENAME_MIPS64EL = "#{BOX_BASENAME}-mips64el"
 BOX_BASENAME_MIPSEL = "#{BOX_BASENAME}-mipsel"
 
+BOX_ARM64 = "#{BOX_BASENAME_ARM64}.box"
 BOX_MIPS64EL = "#{BOX_BASENAME_MIPS64EL}.box"
 BOX_MIPSEL = "#{BOX_BASENAME_MIPSEL}.box"
 
 SHORT_DESCRIPTION = 'a portable cross-compiler, cross-tester VM for GNU/Linux'
 
+SHORT_DESCRIPTION_ARM64 = "#{SHORT_DESCRIPTION} arm64"
 SHORT_DESCRIPTION_MIPS64EL = "#{SHORT_DESCRIPTION} mips64el"
 SHORT_DESCRIPTION_MIPSEL = "#{SHORT_DESCRIPTION} mipsel"
 
 VERSION_DESCRIPTION = 'Source: https://github.com/mcandre/mucus'
 
 task :default => 'test'
+
+task :box_arm64 => [
+    "arm64#{File::SEPARATOR}Vagrantfile",
+    "arm64#{File::SEPARATOR}bootstrap.sh",
+    "arm64#{File::SEPARATOR}export.Vagrantfile",
+    :clean_box_arm64
+] do
+    sh 'vagrant up',
+        :chdir => "arm64"
+    sh "vagrant package --output #{BOX_ARM64} --vagrantfile export.Vagrantfile",
+        :chdir => "arm64"
+end
 
 task :box_mips64el => [
     "mips64el#{File::SEPARATOR}Vagrantfile",
@@ -43,9 +58,15 @@ task :box_mipsel => [
 end
 
 task :boxes => [
+    :box_arm64,
     :box_mips64el,
     :box_mipsel
 ] do
+end
+
+task :import_arm64 => [] do
+    sh "vagrant box add --force --name #{BOX_NAMESPACE}/#{BOX_BASENAME_ARM64} #{BOX_ARM64}",
+        :chdir => "arm64"
 end
 
 task :import_mips64el => [] do
@@ -59,9 +80,20 @@ task :import_mipsel => [] do
 end
 
 task :import => [
+    :import_arm64,
     :import_mips64el,
     :import_mipsel
 ] do
+end
+
+task :test_arm64 => [
+    "arm64#{File::SEPARATOR}test#{File::SEPARATOR}Vagrantfile",
+    "arm64#{File::SEPARATOR}test#{File::SEPARATOR}hello.cpp"
+] do
+    sh 'vagrant up',
+        :chdir => "arm64#{File::SEPARATOR}test"
+    sh 'vagrant ssh -c "cd /vagrant && aarch64-linux-gnu-g++ -o hello hello.cpp && ./hello"',
+        :chdir => "arm64#{File::SEPARATOR}test"
 end
 
 task :test_mips64el => [
@@ -85,9 +117,15 @@ task :test_mipsel => [
 end
 
 task :test => [
+    :test_arm64,
     :test_mips64el,
     :test_mipsel
 ] do
+end
+
+task :publish_arm64 => [] do
+    sh "vagrant cloud publish #{BOX_NAMESPACE}/#{BOX_BASENAME_ARM64} --force --release --short-description \"#{SHORT_DESCRIPTION_ARM64}\" --version-description \"#{VERSION_DESCRIPTION}\" #{VERSION} #{PROVIDER} #{BOX_ARM64}",
+        :chdir => "arm64"
 end
 
 task :publish_mips64el => [] do
@@ -101,9 +139,14 @@ task :publish_mipsel => [] do
 end
 
 task :publish => [
+    :publish_arm64,
     :publish_mips64el,
     :publish_mipsel
 ] do
+end
+
+task :clean_box_arm64 => [] do
+    Dir.glob("arm64#{File::SEPARATOR}*.box").each { |path| File.delete path }
 end
 
 task :clean_box_mips64el => [] do
@@ -115,9 +158,34 @@ task :clean_box_mipsel => [] do
 end
 
 task :clean_boxes => [
+    :clean_box_arm64,
     :clean_box_mips64el,
     :clean_box_mipsel
 ] do
+end
+
+task :clean_arm64 => [:clean_box_arm64] do
+    begin
+        sh 'vagrant destroy -f',
+            :chdir => 'arm64'
+    rescue
+    end
+
+    begin
+        sh 'vagrant destroy -f',
+            :chdir => "arm64#{File::SEPARATOR}test"
+    rescue
+    end
+
+    begin
+        Dir.glob("arm64#{File::SEPARATOR}**#{File::SEPARATOR}.vagrant").each { |path| FileUtils.rm_r path }
+    rescue
+    end
+
+    begin
+        FileUtils.rm_r "arm64#{File::SEPARATOR}_tmp_package"
+    rescue
+    end
 end
 
 task :clean_mips64el => [:clean_box_mips64el] do
@@ -169,6 +237,7 @@ task :clean_mipsel => [:clean_box_mipsel] do
 end
 
 task :clean => [
+    :clean_arm64,
     :clean_mips64el,
     :clean_mipsel
 ] do

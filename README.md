@@ -7,14 +7,15 @@
 # EXAMPLE
 
 ```console
-$ cd mips64el/test
+$ cd arm64/test
 $ vagrant up
-$ vagrant ssh -c "cd /vagrant && mips64el-linux-gnuabi64-g++ -o hello hello.cpp && ./hello"
+$ vagrant ssh -c "cd /vagrant && aarch64-linux-gnu-g++ -o hello hello.cpp && ./hello"
 Hello World!
 ```
 
 # VAGRANT CLOUD
 
+* https://app.vagrantup.com/mcandre/boxes/mucus-arm64
 * https://app.vagrantup.com/mcandre/boxes/mucus-mips64el
 * https://app.vagrantup.com/mcandre/boxes/mucus-mipsel
 
