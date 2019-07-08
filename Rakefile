@@ -5,14 +5,17 @@ BOX_NAMESPACE = 'mcandre'
 BOX_BASENAME = 'mucus'
 BOX_BASENAME_MIPS64EL = "#{BOX_BASENAME}-mips64el"
 BOX_BASENAME_MIPSEL = "#{BOX_BASENAME}-mipsel"
+BOX_BASENAME_S390X = "#{BOX_BASENAME}-s390x"
 
 BOX_MIPS64EL = "#{BOX_BASENAME_MIPS64EL}.box"
 BOX_MIPSEL = "#{BOX_BASENAME_MIPSEL}.box"
+BOX_S390X = "#{BOX_BASENAME_S390X}.box"
 
 SHORT_DESCRIPTION = 'a portable cross-compiler, cross-tester VM for GNU/Linux'
 
 SHORT_DESCRIPTION_MIPS64EL = "#{SHORT_DESCRIPTION} mips64el"
 SHORT_DESCRIPTION_MIPSEL = "#{SHORT_DESCRIPTION} mipsel"
+SHORT_DESCRIPTION_S390X = "#{SHORT_DESCRIPTION} s390x"
 
 VERSION_DESCRIPTION = 'Source: https://github.com/mcandre/mucus'
 
@@ -42,9 +45,22 @@ task :box_mipsel => [
         :chdir => "mipsel"
 end
 
+task :box_g => [
+    "s390x#{File::SEPARATOR}Vagrantfile",
+    "s390x#{File::SEPARATOR}bootstrap.sh",
+    "s390x#{File::SEPARATOR}export.Vagrantfile",
+    :clean_box_s390x
+] do
+    sh 'vagrant up',
+        :chdir => "s390x"
+    sh "vagrant package --output #{BOX_S390X} --vagrantfile export.Vagrantfile",
+        :chdir => "s390x"
+end
+
 task :boxes => [
     :box_mips64el,
-    :box_mipsel
+    :box_mipsel,
+    :box_s390x
 ] do
 end
 
@@ -58,9 +74,15 @@ task :import_mipsel => [] do
         :chdir => "mipsel"
 end
 
+task :import_s390x => [] do
+    sh "vagrant box add --force --name #{BOX_NAMESPACE}/#{BOX_BASENAME_S390X} #{BOX_S390X}",
+        :chdir => "s390x"
+end
+
 task :import => [
     :import_mips64el,
-    :import_mipsel
+    :import_mipsel,
+    :import_s390x
 ] do
 end
 
@@ -84,9 +106,20 @@ task :test_mipsel => [
         :chdir => "mipsel#{File::SEPARATOR}test"
 end
 
+task :test_s390x => [
+    "s390x#{File::SEPARATOR}test#{File::SEPARATOR}Vagrantfile",
+    "s390x#{File::SEPARATOR}test#{File::SEPARATOR}hello.cpp"
+] do
+    sh 'vagrant up',
+        :chdir => "s390x#{File::SEPARATOR}test"
+    sh 'vagrant ssh -c "cd /vagrant && s390x-linux-gnu-g++ -o hello hello.cpp && ./hello"',
+        :chdir => "s390x#{File::SEPARATOR}test"
+end
+
 task :test => [
     :test_mips64el,
-    :test_mipsel
+    :test_mipsel,
+    :test_s390x
 ] do
 end
 
@@ -100,9 +133,15 @@ task :publish_mipsel => [] do
         :chdir => "mipsel"
 end
 
+task :publish_s390x => [] do
+    sh "vagrant cloud publish #{BOX_NAMESPACE}/#{BOX_BASENAME_S390X} --force --release --short-description \"#{SHORT_DESCRIPTION_S390X}\" --version-description \"#{VERSION_DESCRIPTION}\" #{VERSION} #{PROVIDER} #{BOX_S390X}",
+        :chdir => "s390x"
+end
+
 task :publish => [
     :publish_mips64el,
-    :publish_mipsel
+    :publish_mipsel,
+    :publish_s390x
 ] do
 end
 
@@ -114,9 +153,14 @@ task :clean_box_mipsel => [] do
     Dir.glob("mipsel#{File::SEPARATOR}*.box").each { |path| File.delete path }
 end
 
+task :clean_box_s390x => [] do
+    Dir.glob("s390x#{File::SEPARATOR}*.box").each { |path| File.delete path }
+end
+
 task :clean_boxes => [
     :clean_box_mips64el,
-    :clean_box_mipsel
+    :clean_box_mipsel,
+    :clean_box_s390x
 ] do
 end
 
@@ -168,8 +212,33 @@ task :clean_mipsel => [:clean_box_mipsel] do
     end
 end
 
+task :clean_s390x => [:clean_box_s390x] do
+    begin
+        sh 'vagrant destroy -f',
+            :chdir => 's390x'
+    rescue
+    end
+
+    begin
+        sh 'vagrant destroy -f',
+            :chdir => "s390x#{File::SEPARATOR}test"
+    rescue
+    end
+
+    begin
+        Dir.glob("s390x#{File::SEPARATOR}**#{File::SEPARATOR}.vagrant").each { |path| FileUtils.rm_r path }
+    rescue
+    end
+
+    begin
+        FileUtils.rm_r "s390x#{File::SEPARATOR}_tmp_package"
+    rescue
+    end
+end
+
 task :clean => [
     :clean_mips64el,
-    :clean_mipsel
+    :clean_mipsel,
+    :clean_s390x
 ] do
 end

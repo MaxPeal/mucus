@@ -17,6 +17,7 @@ Hello World!
 
 * https://app.vagrantup.com/mcandre/boxes/mucus-mips64el
 * https://app.vagrantup.com/mcandre/boxes/mucus-mipsel
+* https://app.vagrantup.com/mcandre/boxes/mucus-s390x
 
 # ABOUT
 
@@ -35,7 +36,7 @@ mucus offers cross-compilation and cross-testing of GNU/Linux binaries with conv
 # BUILD AND TEST BOXES
 
 ```console
-$ rake box import test
+$ rake boxes import test
 ```
 
 # PUBLISH
