@@ -35,7 +35,7 @@ mucus offers cross-compilation and cross-testing of GNU/Linux binaries with conv
 # BUILD AND TEST BOXES
 
 ```console
-$ rake box import test
+$ rake boxes import test
 ```
 
 # PUBLISH
