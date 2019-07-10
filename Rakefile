@@ -4,16 +4,19 @@ BOX_NAMESPACE = 'mcandre'
 
 BOX_BASENAME = 'mucus'
 BOX_BASENAME_ARM64 = "#{BOX_BASENAME}-arm64"
+BOX_BASENAME_ARMEL = "#{BOX_BASENAME}-armel"
 BOX_BASENAME_MIPS64EL = "#{BOX_BASENAME}-mips64el"
 BOX_BASENAME_MIPSEL = "#{BOX_BASENAME}-mipsel"
 
 BOX_ARM64 = "#{BOX_BASENAME_ARM64}.box"
+BOX_ARMEL = "#{BOX_BASENAME_ARMEL}.box"
 BOX_MIPS64EL = "#{BOX_BASENAME_MIPS64EL}.box"
 BOX_MIPSEL = "#{BOX_BASENAME_MIPSEL}.box"
 
 SHORT_DESCRIPTION = 'a portable cross-compiler, cross-tester VM for GNU/Linux'
 
 SHORT_DESCRIPTION_ARM64 = "#{SHORT_DESCRIPTION} arm64"
+SHORT_DESCRIPTION_ARMEL = "#{SHORT_DESCRIPTION} armel"
 SHORT_DESCRIPTION_MIPS64EL = "#{SHORT_DESCRIPTION} mips64el"
 SHORT_DESCRIPTION_MIPSEL = "#{SHORT_DESCRIPTION} mipsel"
 
@@ -31,6 +34,18 @@ task :box_arm64 => [
         :chdir => "arm64"
     sh "vagrant package --output #{BOX_ARM64} --vagrantfile export.Vagrantfile",
         :chdir => "arm64"
+end
+
+task :box_armel => [
+    "armel#{File::SEPARATOR}Vagrantfile",
+    "armel#{File::SEPARATOR}bootstrap.sh",
+    "armel#{File::SEPARATOR}export.Vagrantfile",
+    :clean_box_armel
+] do
+    sh 'vagrant up',
+        :chdir => "armel"
+    sh "vagrant package --output #{BOX_ARMEL} --vagrantfile export.Vagrantfile",
+        :chdir => "armel"
 end
 
 task :box_mips64el => [
@@ -59,6 +74,7 @@ end
 
 task :boxes => [
     :box_arm64,
+    :box_armel,
     :box_mips64el,
     :box_mipsel
 ] do
@@ -67,6 +83,11 @@ end
 task :import_arm64 => [] do
     sh "vagrant box add --force --name #{BOX_NAMESPACE}/#{BOX_BASENAME_ARM64} #{BOX_ARM64}",
         :chdir => "arm64"
+end
+
+task :import_armel => [] do
+    sh "vagrant box add --force --name #{BOX_NAMESPACE}/#{BOX_BASENAME_ARMEL} #{BOX_ARMEL}",
+        :chdir => "armel"
 end
 
 task :import_mips64el => [] do
@@ -81,6 +102,7 @@ end
 
 task :import => [
     :import_arm64,
+    :import_armel,
     :import_mips64el,
     :import_mipsel
 ] do
@@ -94,6 +116,16 @@ task :test_arm64 => [
         :chdir => "arm64#{File::SEPARATOR}test"
     sh 'vagrant ssh -c "cd /vagrant && aarch64-linux-gnu-g++ -o hello hello.cpp && ./hello"',
         :chdir => "arm64#{File::SEPARATOR}test"
+end
+
+task :test_armel => [
+    "armel#{File::SEPARATOR}test#{File::SEPARATOR}Vagrantfile",
+    "armel#{File::SEPARATOR}test#{File::SEPARATOR}hello.cpp"
+] do
+    sh 'vagrant up',
+        :chdir => "armel#{File::SEPARATOR}test"
+    sh 'vagrant ssh -c "cd /vagrant && arm-linux-gnueabi-g++ -o hello hello.cpp && ./hello"',
+        :chdir => "armel#{File::SEPARATOR}test"
 end
 
 task :test_mips64el => [
@@ -118,6 +150,7 @@ end
 
 task :test => [
     :test_arm64,
+    :test_armel,
     :test_mips64el,
     :test_mipsel
 ] do
@@ -126,6 +159,11 @@ end
 task :publish_arm64 => [] do
     sh "vagrant cloud publish #{BOX_NAMESPACE}/#{BOX_BASENAME_ARM64} --force --release --short-description \"#{SHORT_DESCRIPTION_ARM64}\" --version-description \"#{VERSION_DESCRIPTION}\" #{VERSION} #{PROVIDER} #{BOX_ARM64}",
         :chdir => "arm64"
+end
+
+task :publish_armel => [] do
+    sh "vagrant cloud publish #{BOX_NAMESPACE}/#{BOX_BASENAME_ARMEL} --force --release --short-description \"#{SHORT_DESCRIPTION_ARMEL}\" --version-description \"#{VERSION_DESCRIPTION}\" #{VERSION} #{PROVIDER} #{BOX_ARMEL}",
+        :chdir => "armel"
 end
 
 task :publish_mips64el => [] do
@@ -140,6 +178,7 @@ end
 
 task :publish => [
     :publish_arm64,
+    :publish_armel,
     :publish_mips64el,
     :publish_mipsel
 ] do
@@ -147,6 +186,10 @@ end
 
 task :clean_box_arm64 => [] do
     Dir.glob("arm64#{File::SEPARATOR}*.box").each { |path| File.delete path }
+end
+
+task :clean_box_armel => [] do
+    Dir.glob("armel#{File::SEPARATOR}*.box").each { |path| File.delete path }
 end
 
 task :clean_box_mips64el => [] do
@@ -159,6 +202,7 @@ end
 
 task :clean_boxes => [
     :clean_box_arm64,
+    :clean_box_armel,
     :clean_box_mips64el,
     :clean_box_mipsel
 ] do
@@ -184,6 +228,30 @@ task :clean_arm64 => [:clean_box_arm64] do
 
     begin
         FileUtils.rm_r "arm64#{File::SEPARATOR}_tmp_package"
+    rescue
+    end
+end
+
+task :clean_armel => [:clean_box_armel] do
+    begin
+        sh 'vagrant destroy -f',
+            :chdir => 'armel'
+    rescue
+    end
+
+    begin
+        sh 'vagrant destroy -f',
+            :chdir => "armel#{File::SEPARATOR}test"
+    rescue
+    end
+
+    begin
+        Dir.glob("armel#{File::SEPARATOR}**#{File::SEPARATOR}.vagrant").each { |path| FileUtils.rm_r path }
+    rescue
+    end
+
+    begin
+        FileUtils.rm_r "armel#{File::SEPARATOR}_tmp_package"
     rescue
     end
 end
@@ -238,6 +306,7 @@ end
 
 task :clean => [
     :clean_arm64,
+    :clean_armel,
     :clean_mips64el,
     :clean_mipsel
 ] do

@@ -16,6 +16,7 @@ Hello World!
 # VAGRANT CLOUD
 
 * https://app.vagrantup.com/mcandre/boxes/mucus-arm64
+* https://app.vagrantup.com/mcandre/boxes/mucus-armel
 * https://app.vagrantup.com/mcandre/boxes/mucus-mips64el
 * https://app.vagrantup.com/mcandre/boxes/mucus-mipsel
 
