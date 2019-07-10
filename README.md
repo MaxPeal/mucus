@@ -17,6 +17,7 @@ Hello World!
 
 * https://app.vagrantup.com/mcandre/boxes/mucus-arm64
 * https://app.vagrantup.com/mcandre/boxes/mucus-armel
+* https://app.vagrantup.com/mcandre/boxes/mucus-armhf
 * https://app.vagrantup.com/mcandre/boxes/mucus-mips64el
 * https://app.vagrantup.com/mcandre/boxes/mucus-mipsel
 
