@@ -8,12 +8,14 @@ BOX_BASENAME_ARMEL = "#{BOX_BASENAME}-armel"
 BOX_BASENAME_ARMHF = "#{BOX_BASENAME}-armhf"
 BOX_BASENAME_MIPS64EL = "#{BOX_BASENAME}-mips64el"
 BOX_BASENAME_MIPSEL = "#{BOX_BASENAME}-mipsel"
+BOX_BASENAME_PPC64EL = "#{BOX_BASENAME}-ppc64el"
 
 BOX_ARM64 = "#{BOX_BASENAME_ARM64}.box"
 BOX_ARMEL = "#{BOX_BASENAME_ARMEL}.box"
 BOX_ARMHF = "#{BOX_BASENAME_ARMHF}.box"
 BOX_MIPS64EL = "#{BOX_BASENAME_MIPS64EL}.box"
 BOX_MIPSEL = "#{BOX_BASENAME_MIPSEL}.box"
+BOX_PPC64EL = "#{BOX_BASENAME_PPC64EL}.box"
 
 SHORT_DESCRIPTION = 'a portable cross-compiler, cross-tester VM for GNU/Linux'
 
@@ -22,6 +24,7 @@ SHORT_DESCRIPTION_ARMEL = "#{SHORT_DESCRIPTION} armel"
 SHORT_DESCRIPTION_ARMHF = "#{SHORT_DESCRIPTION} armhf"
 SHORT_DESCRIPTION_MIPS64EL = "#{SHORT_DESCRIPTION} mips64el"
 SHORT_DESCRIPTION_MIPSEL = "#{SHORT_DESCRIPTION} mipsel"
+SHORT_DESCRIPTION_PPC64EL = "#{SHORT_DESCRIPTION} ppc64el"
 
 VERSION_DESCRIPTION = 'Source: https://github.com/mcandre/mucus'
 
@@ -87,12 +90,25 @@ task :box_mipsel => [
         :chdir => "mipsel"
 end
 
+task :box_ppc64el => [
+    "ppc64el#{File::SEPARATOR}Vagrantfile",
+    "ppc64el#{File::SEPARATOR}bootstrap.sh",
+    "ppc64el#{File::SEPARATOR}export.Vagrantfile",
+    :clean_box_ppc64el
+] do
+    sh 'vagrant up',
+        :chdir => "ppc64el"
+    sh "vagrant package --output #{BOX_PPC64EL} --vagrantfile export.Vagrantfile",
+        :chdir => "ppc64el"
+end
+
 task :boxes => [
     :box_arm64,
     :box_armel,
     :box_armhf,
     :box_mips64el,
-    :box_mipsel
+    :box_mipsel,
+    :box_ppc64el
 ] do
 end
 
@@ -121,12 +137,18 @@ task :import_mipsel => [] do
         :chdir => "mipsel"
 end
 
+task :import_ppc64el => [] do
+    sh "vagrant box add --force --name #{BOX_NAMESPACE}/#{BOX_BASENAME_PPC64EL} #{BOX_PPC64EL}",
+        :chdir => "ppc64el"
+end
+
 task :import => [
     :import_arm64,
     :import_armel,
     :import_armhf,
     :import_mips64el,
-    :import_mipsel
+    :import_mipsel,
+    :import_ppc64el
 ] do
 end
 
@@ -180,12 +202,23 @@ task :test_mipsel => [
         :chdir => "mipsel#{File::SEPARATOR}test"
 end
 
+task :test_ppc64el => [
+    "ppc64el#{File::SEPARATOR}test#{File::SEPARATOR}Vagrantfile",
+    "ppc64el#{File::SEPARATOR}test#{File::SEPARATOR}hello.cpp"
+] do
+    sh 'vagrant up',
+        :chdir => "ppc64el#{File::SEPARATOR}test"
+    sh 'vagrant ssh -c "cd /vagrant && powerpc64le-linux-gnu-g++ -o hello hello.cpp && ./hello"',
+        :chdir => "ppc64el#{File::SEPARATOR}test"
+end
+
 task :test => [
     :test_arm64,
     :test_armel,
     :test_armhf,
     :test_mips64el,
-    :test_mipsel
+    :test_mipsel,
+    :test_ppc64el
 ] do
 end
 
@@ -214,12 +247,18 @@ task :publish_mipsel => [] do
         :chdir => "mipsel"
 end
 
+task :publish_ppc64el => [] do
+    sh "vagrant cloud publish #{BOX_NAMESPACE}/#{BOX_BASENAME_PPC64EL} --force --release --short-description \"#{SHORT_DESCRIPTION_PPC64EL}\" --version-description \"#{VERSION_DESCRIPTION}\" #{VERSION} #{PROVIDER} #{BOX_PPC64EL}",
+        :chdir => "ppc64el"
+end
+
 task :publish => [
     :publish_arm64,
     :publish_armel,
     :publish_armhf,
     :publish_mips64el,
-    :publish_mipsel
+    :publish_mipsel,
+    :publish_ppc64el
 ] do
 end
 
@@ -243,12 +282,17 @@ task :clean_box_mipsel => [] do
     Dir.glob("mipsel#{File::SEPARATOR}*.box").each { |path| File.delete path }
 end
 
+task :clean_box_ppc64el => [] do
+    Dir.glob("ppc64el#{File::SEPARATOR}*.box").each { |path| File.delete path }
+end
+
 task :clean_boxes => [
     :clean_box_arm64,
     :clean_box_armel,
     :clean_box_armhf,
     :clean_box_mips64el,
-    :clean_box_mipsel
+    :clean_box_mipsel,
+    :clean_box_ppc64el
 ] do
 end
 
@@ -372,11 +416,36 @@ task :clean_mipsel => [:clean_box_mipsel] do
     end
 end
 
+task :clean_ppc64el => [:clean_box_ppc64el] do
+    begin
+        sh 'vagrant destroy -f',
+            :chdir => 'ppc64el'
+    rescue
+    end
+
+    begin
+        sh 'vagrant destroy -f',
+            :chdir => "ppc64el#{File::SEPARATOR}test"
+    rescue
+    end
+
+    begin
+        Dir.glob("ppc64el#{File::SEPARATOR}**#{File::SEPARATOR}.vagrant").each { |path| FileUtils.rm_r path }
+    rescue
+    end
+
+    begin
+        FileUtils.rm_r "ppc64el#{File::SEPARATOR}_tmp_package"
+    rescue
+    end
+end
+
 task :clean => [
     :clean_arm64,
     :clean_armel,
     :clean_armhf,
     :clean_mips64el,
-    :clean_mipsel
+    :clean_mipsel,
+    :clean_ppc64el
 ] do
 end
