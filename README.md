@@ -21,6 +21,7 @@ Hello World!
 * https://app.vagrantup.com/mcandre/boxes/mucus-mips64el
 * https://app.vagrantup.com/mcandre/boxes/mucus-mipsel
 * https://app.vagrantup.com/mcandre/boxes/mucus-ppc64el
+* https://app.vagrantup.com/mcandre/boxes/mucus-sparc64
 
 # ABOUT
 
