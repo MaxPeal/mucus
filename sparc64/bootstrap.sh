@@ -1,5 +1,8 @@
 #!/bin/sh
-sudo dpkg --add-architecture sparc64 &&
+sudo sed -i 's/buster/unstable/' /etc/apt/sources.list &&
+    sudo apt-get update &&
+    sudo apt-get -y full-upgrade &&
+    sudo dpkg --add-architecture sparc64 &&
     sudo apt-get update \
         --allow-releaseinfo-change && # Work around https://github.com/mcandre/packer-templates/issues/251
     sudo apt-get install -y \
