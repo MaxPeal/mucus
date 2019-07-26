@@ -1,14 +1,7 @@
 #!/bin/sh
-    sudo printf "deb http://deb.debian.org/debian/ unstable main\ndeb-src http://deb.debian.org/debian/ unstable main\n" >/etc/apt/sources.list &&
-    sudo apt-get update &&
-    DEBIAN_FRONTEND=noninteractive apt-get full-upgrade \
-        -q \
-        -y \
-        -u \
-        -o Dpkg::Options::="--force-confdef" &&
-    sudo apt-get -y --purge autoremove &&
+sudo apt-get update &&
     sudo apt-get install -y debian-ports-archive-keyring &&
-    sudo printf "deb http://deb.debian.org/debian-ports unstable main\ndeb http://deb.debian.org/debian-ports unreleased main\ndeb-src http://deb.debian.org/debian-ports unreleased main\n" >>/etc/apt/sources.list &&
+    sudo printf "deb http://ftp.ports.debian.org/debian-ports unstable main\ndeb http://ftp.ports.debian.org/debian-ports unreleased main\ndeb-src http://ftp.ports.debian.org/debian-ports unreleased main\n" >>/etc/apt/sources.list &&
     sudo apt-get update &&
     sudo dpkg --add-architecture sparc64 &&
     sudo apt-get update \

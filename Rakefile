@@ -240,7 +240,7 @@ task :test_sparc64 => [
 ] do
     sh 'vagrant up',
         :chdir => "sparc64#{File::SEPARATOR}test"
-    sh 'vagrant ssh -c "cd /vagrant && sparc64-linux-gnu-g++ -o hello hello.cpp && ./hello"',
+    sh 'vagrant ssh -c "cd /vagrant && sparc64-linux-gnu-g++ -o hello hello.cpp && qemu-sparc64-static hello"',
         :chdir => "sparc64#{File::SEPARATOR}test"
 end
 
