@@ -7,6 +7,7 @@ BOX_BASENAME_ALPHA = "#{BOX_BASENAME}-alpha"
 BOX_BASENAME_ARM64 = "#{BOX_BASENAME}-arm64"
 BOX_BASENAME_ARMEL = "#{BOX_BASENAME}-armel"
 BOX_BASENAME_ARMHF = "#{BOX_BASENAME}-armhf"
+BOX_BASENAME_HPPA = "#{BOX_BASENAME}-hppa"
 BOX_BASENAME_MIPS64EL = "#{BOX_BASENAME}-mips64el"
 BOX_BASENAME_MIPSEL = "#{BOX_BASENAME}-mipsel"
 BOX_BASENAME_PPC64EL = "#{BOX_BASENAME}-ppc64el"
@@ -16,6 +17,7 @@ BOX_ALPHA = "#{BOX_BASENAME_ALPHA}.box"
 BOX_ARM64 = "#{BOX_BASENAME_ARM64}.box"
 BOX_ARMEL = "#{BOX_BASENAME_ARMEL}.box"
 BOX_ARMHF = "#{BOX_BASENAME_ARMHF}.box"
+BOX_HPPA = "#{BOX_BASENAME_HPPA}.box"
 BOX_MIPS64EL = "#{BOX_BASENAME_MIPS64EL}.box"
 BOX_MIPSEL = "#{BOX_BASENAME_MIPSEL}.box"
 BOX_PPC64EL = "#{BOX_BASENAME_PPC64EL}.box"
@@ -27,6 +29,7 @@ SHORT_DESCRIPTION_ALPHA = "#{SHORT_DESCRIPTION} alpha"
 SHORT_DESCRIPTION_ARM64 = "#{SHORT_DESCRIPTION} arm64"
 SHORT_DESCRIPTION_ARMEL = "#{SHORT_DESCRIPTION} armel"
 SHORT_DESCRIPTION_ARMHF = "#{SHORT_DESCRIPTION} armhf"
+SHORT_DESCRIPTION_HPPA = "#{SHORT_DESCRIPTION} hppa"
 SHORT_DESCRIPTION_MIPS64EL = "#{SHORT_DESCRIPTION} mips64el"
 SHORT_DESCRIPTION_MIPSEL = "#{SHORT_DESCRIPTION} mipsel"
 SHORT_DESCRIPTION_PPC64EL = "#{SHORT_DESCRIPTION} ppc64el"
@@ -84,6 +87,18 @@ task :box_armhf => [
         :chdir => "armhf"
 end
 
+task :box_hppa => [
+    "hppa#{File::SEPARATOR}Vagrantfile",
+    "hppa#{File::SEPARATOR}bootstrap.sh",
+    "hppa#{File::SEPARATOR}export.Vagrantfile",
+    :clean_box_hppa
+] do
+    sh 'vagrant up',
+        :chdir => "hppa"
+    sh "vagrant package --output #{BOX_HPPA} --vagrantfile export.Vagrantfile",
+        :chdir => "hppa"
+end
+
 task :box_mips64el => [
     "mips64el#{File::SEPARATOR}Vagrantfile",
     "mips64el#{File::SEPARATOR}bootstrap.sh",
@@ -137,6 +152,7 @@ task :boxes => [
     :box_arm64,
     :box_armel,
     :box_armhf,
+    :box_hppa,
     :box_mips64el,
     :box_mipsel,
     :box_ppc64el,
@@ -164,6 +180,11 @@ task :import_armhf => [] do
         :chdir => "armhf"
 end
 
+task :import_hppa => [] do
+    sh "vagrant box add --force --name #{BOX_NAMESPACE}/#{BOX_BASENAME_HPPA} #{BOX_HPPA}",
+        :chdir => "hppa"
+end
+
 task :import_mips64el => [] do
     sh "vagrant box add --force --name #{BOX_NAMESPACE}/#{BOX_BASENAME_MIPS64EL} #{BOX_MIPS64EL}",
         :chdir => "mips64el"
@@ -189,6 +210,7 @@ task :import => [
     :import_arm64,
     :import_armel,
     :import_armhf,
+    :import_hppa,
     :import_mips64el,
     :import_mipsel,
     :import_ppc64el,
@@ -236,6 +258,16 @@ task :test_armhf => [
         :chdir => "armhf#{File::SEPARATOR}test"
 end
 
+task :test_hppa => [
+    "hppa#{File::SEPARATOR}test#{File::SEPARATOR}Vagrantfile",
+    "hppa#{File::SEPARATOR}test#{File::SEPARATOR}hello.cpp"
+] do
+    sh 'vagrant up',
+        :chdir => "hppa#{File::SEPARATOR}test"
+    sh 'vagrant ssh -c "cd /vagrant && hppa-linux-gnu-g++ -o hello hello.cpp && qemu-hppa-static hello"',
+        :chdir => "hppa#{File::SEPARATOR}test"
+end
+
 task :test_mips64el => [
     "mips64el#{File::SEPARATOR}test#{File::SEPARATOR}Vagrantfile",
     "mips64el#{File::SEPARATOR}test#{File::SEPARATOR}hello.cpp"
@@ -281,6 +313,7 @@ task :test => [
     :test_arm64,
     :test_armel,
     :test_armhf,
+    :test_hppa,
     :test_mips64el,
     :test_mipsel,
     :test_ppc64el,
@@ -308,6 +341,11 @@ task :publish_armhf => [] do
         :chdir => "armhf"
 end
 
+task :publish_hppa => [] do
+    sh "vagrant cloud publish #{BOX_NAMESPACE}/#{BOX_BASENAME_HPPA} --force --release --short-description \"#{SHORT_DESCRIPTION_HPPA}\" --version-description \"#{VERSION_DESCRIPTION}\" #{VERSION} #{PROVIDER} #{BOX_HPPA}",
+        :chdir => "hppa"
+end
+
 task :publish_mips64el => [] do
     sh "vagrant cloud publish #{BOX_NAMESPACE}/#{BOX_BASENAME_MIPS64EL} --force --release --short-description \"#{SHORT_DESCRIPTION_MIPS64EL}\" --version-description \"#{VERSION_DESCRIPTION}\" #{VERSION} #{PROVIDER} #{BOX_MIPS64EL}",
         :chdir => "mips64el"
@@ -333,6 +371,7 @@ task :publish => [
     :publish_arm64,
     :publish_armel,
     :publish_armhf,
+    :publish_hppa,
     :publish_mips64el,
     :publish_mipsel,
     :publish_ppc64el,
@@ -356,6 +395,10 @@ task :clean_box_armhf => [] do
     Dir.glob("armhf#{File::SEPARATOR}*.box").each { |path| File.delete path }
 end
 
+task :clean_box_hppa => [] do
+    Dir.glob("hppa#{File::SEPARATOR}*.box").each { |path| File.delete path }
+end
+
 task :clean_box_mips64el => [] do
     Dir.glob("mips64el#{File::SEPARATOR}*.box").each { |path| File.delete path }
 end
@@ -377,6 +420,7 @@ task :clean_boxes => [
     :clean_box_arm64,
     :clean_box_armel,
     :clean_box_armhf,
+    :clean_box_hppa,
     :clean_box_mips64el,
     :clean_box_mipsel,
     :clean_box_ppc64el,
@@ -384,7 +428,7 @@ task :clean_boxes => [
 ] do
 end
 
-task :clean_alpha => [:clean_box_arm64] do
+task :clean_alpha => [:clean_box_alpha] do
     begin
         sh 'vagrant destroy -f',
             :chdir => 'alpha'
@@ -476,6 +520,30 @@ task :clean_armhf => [:clean_box_armhf] do
 
     begin
         FileUtils.rm_r "armhf#{File::SEPARATOR}_tmp_package"
+    rescue
+    end
+end
+
+task :clean_hppa => [:clean_box_hppa] do
+    begin
+        sh 'vagrant destroy -f',
+            :chdir => 'hppa'
+    rescue
+    end
+
+    begin
+        sh 'vagrant destroy -f',
+            :chdir => "hppa#{File::SEPARATOR}test"
+    rescue
+    end
+
+    begin
+        Dir.glob("hppa#{File::SEPARATOR}**#{File::SEPARATOR}.vagrant").each { |path| FileUtils.rm_r path }
+    rescue
+    end
+
+    begin
+        FileUtils.rm_r "hppa#{File::SEPARATOR}_tmp_package"
     rescue
     end
 end
@@ -581,6 +649,7 @@ task :clean => [
     :clean_arm64,
     :clean_armel,
     :clean_armhf,
+    :clean_hppa,
     :clean_mips64el,
     :clean_mipsel,
     :clean_ppc64el,
