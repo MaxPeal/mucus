@@ -3,6 +3,7 @@ PROVIDER = 'virtualbox'
 BOX_NAMESPACE = 'mcandre'
 
 BOX_BASENAME = 'mucus'
+BOX_BASENAME_ALPHA = "#{BOX_BASENAME}-alpha"
 BOX_BASENAME_ARM64 = "#{BOX_BASENAME}-arm64"
 BOX_BASENAME_ARMEL = "#{BOX_BASENAME}-armel"
 BOX_BASENAME_ARMHF = "#{BOX_BASENAME}-armhf"
@@ -11,6 +12,7 @@ BOX_BASENAME_MIPSEL = "#{BOX_BASENAME}-mipsel"
 BOX_BASENAME_PPC64EL = "#{BOX_BASENAME}-ppc64el"
 BOX_BASENAME_SPARC64 = "#{BOX_BASENAME}-sparc64"
 
+BOX_ALPHA = "#{BOX_BASENAME_ALPHA}.box"
 BOX_ARM64 = "#{BOX_BASENAME_ARM64}.box"
 BOX_ARMEL = "#{BOX_BASENAME_ARMEL}.box"
 BOX_ARMHF = "#{BOX_BASENAME_ARMHF}.box"
@@ -21,6 +23,7 @@ BOX_SPARC64 = "#{BOX_BASENAME_SPARC64}.box"
 
 SHORT_DESCRIPTION = 'a portable cross-compiler, cross-tester VM for GNU/Linux'
 
+SHORT_DESCRIPTION_ALPHA = "#{SHORT_DESCRIPTION} alpha"
 SHORT_DESCRIPTION_ARM64 = "#{SHORT_DESCRIPTION} arm64"
 SHORT_DESCRIPTION_ARMEL = "#{SHORT_DESCRIPTION} armel"
 SHORT_DESCRIPTION_ARMHF = "#{SHORT_DESCRIPTION} armhf"
@@ -32,6 +35,18 @@ SHORT_DESCRIPTION_SPARC64 = "#{SHORT_DESCRIPTION} sparc64"
 VERSION_DESCRIPTION = 'Source: https://github.com/mcandre/mucus'
 
 task :default => 'test'
+
+task :box_alpha => [
+    "alpha#{File::SEPARATOR}Vagrantfile",
+    "alpha#{File::SEPARATOR}bootstrap.sh",
+    "alpha#{File::SEPARATOR}export.Vagrantfile",
+    :clean_box_alpha
+] do
+    sh 'vagrant up',
+        :chdir => "alpha"
+    sh "vagrant package --output #{BOX_ALPHA} --vagrantfile export.Vagrantfile",
+        :chdir => "alpha"
+end
 
 task :box_arm64 => [
     "arm64#{File::SEPARATOR}Vagrantfile",
@@ -118,6 +133,7 @@ task :box_sparc64 => [
 end
 
 task :boxes => [
+    :box_alpha,
     :box_arm64,
     :box_armel,
     :box_armhf,
@@ -126,6 +142,11 @@ task :boxes => [
     :box_ppc64el,
     :box_sparc64
 ] do
+end
+
+task :import_alpha => [] do
+    sh "vagrant box add --force --name #{BOX_NAMESPACE}/#{BOX_BASENAME_ALPHA} #{BOX_ALPHA}",
+        :chdir => "alpha"
 end
 
 task :import_arm64 => [] do
@@ -164,6 +185,7 @@ task :import_sparc64 => [] do
 end
 
 task :import => [
+    :import_alpha,
     :import_arm64,
     :import_armel,
     :import_armhf,
@@ -172,6 +194,16 @@ task :import => [
     :import_ppc64el,
     :import_sparc64
 ] do
+end
+
+task :test_alpha => [
+    "alpha#{File::SEPARATOR}test#{File::SEPARATOR}Vagrantfile",
+    "alpha#{File::SEPARATOR}test#{File::SEPARATOR}hello.cpp"
+] do
+    sh 'vagrant up',
+        :chdir => "alpha#{File::SEPARATOR}test"
+    sh 'vagrant ssh -c "cd /vagrant && alpha-linux-gnu-g++ -o hello hello.cpp && qemu-alpha-static hello"',
+        :chdir => "alpha#{File::SEPARATOR}test"
 end
 
 task :test_arm64 => [
@@ -245,6 +277,7 @@ task :test_sparc64 => [
 end
 
 task :test => [
+    :test_alpha,
     :test_arm64,
     :test_armel,
     :test_armhf,
@@ -253,6 +286,11 @@ task :test => [
     :test_ppc64el,
     :test_sparc64
 ] do
+end
+
+task :publish_alpha => [] do
+    sh "vagrant cloud publish #{BOX_NAMESPACE}/#{BOX_BASENAME_ALPHA} --force --release --short-description \"#{SHORT_DESCRIPTION_ALPHA}\" --version-description \"#{VERSION_DESCRIPTION}\" #{VERSION} #{PROVIDER} #{BOX_ALPHA}",
+        :chdir => "alpha"
 end
 
 task :publish_arm64 => [] do
@@ -291,6 +329,7 @@ task :publish_sparc64 => [] do
 end
 
 task :publish => [
+    :publish_alpha,
     :publish_arm64,
     :publish_armel,
     :publish_armhf,
@@ -299,6 +338,10 @@ task :publish => [
     :publish_ppc64el,
     :publish_sparc64
 ] do
+end
+
+task :clean_box_alpha => [] do
+    Dir.glob("alpha#{File::SEPARATOR}*.box").each { |path| File.delete path }
 end
 
 task :clean_box_arm64 => [] do
@@ -330,6 +373,7 @@ task :clean_box_sparc64 => [] do
 end
 
 task :clean_boxes => [
+    :clean_box_alpha,
     :clean_box_arm64,
     :clean_box_armel,
     :clean_box_armhf,
@@ -338,6 +382,30 @@ task :clean_boxes => [
     :clean_box_ppc64el,
     :clean_box_sparc64
 ] do
+end
+
+task :clean_alpha => [:clean_box_arm64] do
+    begin
+        sh 'vagrant destroy -f',
+            :chdir => 'alpha'
+    rescue
+    end
+
+    begin
+        sh 'vagrant destroy -f',
+            :chdir => "alpha#{File::SEPARATOR}test"
+    rescue
+    end
+
+    begin
+        Dir.glob("alpha#{File::SEPARATOR}**#{File::SEPARATOR}.vagrant").each { |path| FileUtils.rm_r path }
+    rescue
+    end
+
+    begin
+        FileUtils.rm_r "alpha#{File::SEPARATOR}_tmp_package"
+    rescue
+    end
 end
 
 task :clean_arm64 => [:clean_box_arm64] do
@@ -509,6 +577,7 @@ task :clean_sparc64 => [:clean_box_sparc64] do
 end
 
 task :clean => [
+    :clean_alpha,
     :clean_arm64,
     :clean_armel,
     :clean_armhf,
