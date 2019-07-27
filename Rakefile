@@ -13,6 +13,7 @@ BOX_BASENAME_MIPSEL = "#{BOX_BASENAME}-mipsel"
 BOX_BASENAME_POWERPC = "#{BOX_BASENAME}-powerpc"
 BOX_BASENAME_PPC64 = "#{BOX_BASENAME}-ppc64"
 BOX_BASENAME_PPC64EL = "#{BOX_BASENAME}-ppc64el"
+BOX_BASENAME_RISCV64 = "#{BOX_BASENAME}-riscv64"
 BOX_BASENAME_SPARC64 = "#{BOX_BASENAME}-sparc64"
 
 BOX_ALPHA = "#{BOX_BASENAME_ALPHA}.box"
@@ -25,6 +26,7 @@ BOX_MIPSEL = "#{BOX_BASENAME_MIPSEL}.box"
 BOX_POWERPC = "#{BOX_BASENAME_POWERPC}.box"
 BOX_PPC64 = "#{BOX_BASENAME_PPC64}.box"
 BOX_PPC64EL = "#{BOX_BASENAME_PPC64EL}.box"
+BOX_RISCV64 = "#{BOX_BASENAME_RISCV64}.box"
 BOX_SPARC64 = "#{BOX_BASENAME_SPARC64}.box"
 
 SHORT_DESCRIPTION = 'a portable cross-compiler, cross-tester VM for GNU/Linux'
@@ -39,6 +41,7 @@ SHORT_DESCRIPTION_MIPSEL = "#{SHORT_DESCRIPTION} mipsel"
 SHORT_DESCRIPTION_POWERPC = "#{SHORT_DESCRIPTION} powerpc"
 SHORT_DESCRIPTION_PPC64 = "#{SHORT_DESCRIPTION} ppc64"
 SHORT_DESCRIPTION_PPC64EL = "#{SHORT_DESCRIPTION} ppc64el"
+SHORT_DESCRIPTION_RISCV64 = "#{SHORT_DESCRIPTION} riscv64"
 SHORT_DESCRIPTION_SPARC64 = "#{SHORT_DESCRIPTION} sparc64"
 
 VERSION_DESCRIPTION = 'Source: https://github.com/mcandre/mucus'
@@ -165,6 +168,18 @@ task :box_ppc64el => [
         :chdir => "ppc64el"
 end
 
+task :box_riscv64 => [
+    "riscv64#{File::SEPARATOR}Vagrantfile",
+    "riscv64#{File::SEPARATOR}bootstrap.sh",
+    "riscv64#{File::SEPARATOR}export.Vagrantfile",
+    :clean_box_riscv64
+] do
+    sh 'vagrant up',
+        :chdir => "riscv64"
+    sh "vagrant package --output #{BOX_RISCV64} --vagrantfile export.Vagrantfile",
+        :chdir => "riscv64"
+end
+
 task :box_sparc64 => [
     "sparc64#{File::SEPARATOR}Vagrantfile",
     "sparc64#{File::SEPARATOR}bootstrap.sh",
@@ -188,6 +203,7 @@ task :boxes => [
     :box_powerpc,
     :box_ppc64,
     :box_ppc64el,
+    :box_riscv64,
     :box_sparc64
 ] do
 end
@@ -242,6 +258,11 @@ task :import_ppc64el => [] do
         :chdir => "ppc64el"
 end
 
+task :import_riscv64 => [] do
+    sh "vagrant box add --force --name #{BOX_NAMESPACE}/#{BOX_BASENAME_RISCV64} #{BOX_RISCV64}",
+        :chdir => "riscv64"
+end
+
 task :import_sparc64 => [] do
     sh "vagrant box add --force --name #{BOX_NAMESPACE}/#{BOX_BASENAME_SPARC64} #{BOX_SPARC64}",
         :chdir => "sparc64"
@@ -258,6 +279,7 @@ task :import => [
     :import_powerpc,
     :import_ppc64,
     :import_ppc64el,
+    :import_riscv64,
     :import_sparc64
 ] do
 end
@@ -362,6 +384,16 @@ task :test_ppc64el => [
         :chdir => "ppc64el#{File::SEPARATOR}test"
 end
 
+task :test_riscv64 => [
+    "riscv64#{File::SEPARATOR}test#{File::SEPARATOR}Vagrantfile",
+    "riscv64#{File::SEPARATOR}test#{File::SEPARATOR}hello.cpp"
+] do
+    sh 'vagrant up',
+        :chdir => "riscv64#{File::SEPARATOR}test"
+    sh 'vagrant ssh -c "cd /vagrant && riscv64-linux-gnu-g++ -o hello hello.cpp && qemu-riscv64-static hello"',
+        :chdir => "riscv64#{File::SEPARATOR}test"
+end
+
 task :test_sparc64 => [
     "sparc64#{File::SEPARATOR}test#{File::SEPARATOR}Vagrantfile",
     "sparc64#{File::SEPARATOR}test#{File::SEPARATOR}hello.cpp"
@@ -383,6 +415,7 @@ task :test => [
     :test_powerpc,
     :test_ppc64,
     :test_ppc64el,
+    :test_riscv64,
     :test_sparc64
 ] do
 end
@@ -437,6 +470,11 @@ task :publish_ppc64el => [] do
         :chdir => "ppc64el"
 end
 
+task :publish_riscv64 => [] do
+    sh "vagrant cloud publish #{BOX_NAMESPACE}/#{BOX_BASENAME_RISCV64} --force --release --short-description \"#{SHORT_DESCRIPTION_RISCV64}\" --version-description \"#{VERSION_DESCRIPTION}\" #{VERSION} #{PROVIDER} #{BOX_RISCV64}",
+        :chdir => "riscv64"
+end
+
 task :publish_sparc64 => [] do
     sh "vagrant cloud publish #{BOX_NAMESPACE}/#{BOX_BASENAME_SPARC64} --force --release --short-description \"#{SHORT_DESCRIPTION_SPARC64}\" --version-description \"#{VERSION_DESCRIPTION}\" #{VERSION} #{PROVIDER} #{BOX_SPARC64}",
         :chdir => "sparc64"
@@ -453,6 +491,7 @@ task :publish => [
     :publish_powerpc,
     :publish_ppc64,
     :publish_ppc64el,
+    :publish_riscv64,
     :publish_sparc64
 ] do
 end
@@ -497,6 +536,10 @@ task :clean_box_ppc64el => [] do
     Dir.glob("ppc64el#{File::SEPARATOR}*.box").each { |path| File.delete path }
 end
 
+task :clean_box_riscv64 => [] do
+    Dir.glob("riscv64#{File::SEPARATOR}*.box").each { |path| File.delete path }
+end
+
 task :clean_box_sparc64 => [] do
     Dir.glob("sparc64#{File::SEPARATOR}*.box").each { |path| File.delete path }
 end
@@ -512,6 +555,7 @@ task :clean_boxes => [
     :clean_box_powerpc,
     :clean_box_ppc64,
     :clean_box_ppc64el,
+    :clean_box_riscv64,
     :clean_box_sparc64
 ] do
 end
@@ -756,6 +800,30 @@ task :clean_ppc64el => [:clean_box_ppc64el] do
     end
 end
 
+task :clean_riscv64 => [:clean_box_riscv64] do
+    begin
+        sh 'vagrant destroy -f',
+            :chdir => 'riscv64'
+    rescue
+    end
+
+    begin
+        sh 'vagrant destroy -f',
+            :chdir => "riscv64#{File::SEPARATOR}test"
+    rescue
+    end
+
+    begin
+        Dir.glob("riscv64#{File::SEPARATOR}**#{File::SEPARATOR}.vagrant").each { |path| FileUtils.rm_r path }
+    rescue
+    end
+
+    begin
+        FileUtils.rm_r "riscv64#{File::SEPARATOR}_tmp_package"
+    rescue
+    end
+end
+
 task :clean_sparc64 => [:clean_box_sparc64] do
     begin
         sh 'vagrant destroy -f',
@@ -791,6 +859,7 @@ task :clean => [
     :clean_powerpc,
     :clean_ppc64,
     :clean_ppc64el,
+    :clean_riscv64,
     :clean_sparc64
 ] do
 end
