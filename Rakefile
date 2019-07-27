@@ -10,6 +10,7 @@ BOX_BASENAME_ARMHF = "#{BOX_BASENAME}-armhf"
 BOX_BASENAME_HPPA = "#{BOX_BASENAME}-hppa"
 BOX_BASENAME_MIPS64EL = "#{BOX_BASENAME}-mips64el"
 BOX_BASENAME_MIPSEL = "#{BOX_BASENAME}-mipsel"
+BOX_BASENAME_POWERPC = "#{BOX_BASENAME}-powerpc"
 BOX_BASENAME_PPC64 = "#{BOX_BASENAME}-ppc64"
 BOX_BASENAME_PPC64EL = "#{BOX_BASENAME}-ppc64el"
 BOX_BASENAME_SPARC64 = "#{BOX_BASENAME}-sparc64"
@@ -21,6 +22,7 @@ BOX_ARMHF = "#{BOX_BASENAME_ARMHF}.box"
 BOX_HPPA = "#{BOX_BASENAME_HPPA}.box"
 BOX_MIPS64EL = "#{BOX_BASENAME_MIPS64EL}.box"
 BOX_MIPSEL = "#{BOX_BASENAME_MIPSEL}.box"
+BOX_POWERPC = "#{BOX_BASENAME_POWERPC}.box"
 BOX_PPC64 = "#{BOX_BASENAME_PPC64}.box"
 BOX_PPC64EL = "#{BOX_BASENAME_PPC64EL}.box"
 BOX_SPARC64 = "#{BOX_BASENAME_SPARC64}.box"
@@ -34,6 +36,7 @@ SHORT_DESCRIPTION_ARMHF = "#{SHORT_DESCRIPTION} armhf"
 SHORT_DESCRIPTION_HPPA = "#{SHORT_DESCRIPTION} hppa"
 SHORT_DESCRIPTION_MIPS64EL = "#{SHORT_DESCRIPTION} mips64el"
 SHORT_DESCRIPTION_MIPSEL = "#{SHORT_DESCRIPTION} mipsel"
+SHORT_DESCRIPTION_POWERPC = "#{SHORT_DESCRIPTION} powerpc"
 SHORT_DESCRIPTION_PPC64 = "#{SHORT_DESCRIPTION} ppc64"
 SHORT_DESCRIPTION_PPC64EL = "#{SHORT_DESCRIPTION} ppc64el"
 SHORT_DESCRIPTION_SPARC64 = "#{SHORT_DESCRIPTION} sparc64"
@@ -126,6 +129,18 @@ task :box_mipsel => [
         :chdir => "mipsel"
 end
 
+task :box_powerpc => [
+    "powerpc#{File::SEPARATOR}Vagrantfile",
+    "powerpc#{File::SEPARATOR}bootstrap.sh",
+    "powerpc#{File::SEPARATOR}export.Vagrantfile",
+    :clean_box_powerpc
+] do
+    sh 'vagrant up',
+        :chdir => "powerpc"
+    sh "vagrant package --output #{BOX_POWERPC} --vagrantfile export.Vagrantfile",
+        :chdir => "powerpc"
+end
+
 task :box_ppc64 => [
     "ppc64#{File::SEPARATOR}Vagrantfile",
     "ppc64#{File::SEPARATOR}bootstrap.sh",
@@ -170,6 +185,7 @@ task :boxes => [
     :box_hppa,
     :box_mips64el,
     :box_mipsel,
+    :box_powerpc,
     :box_ppc64,
     :box_ppc64el,
     :box_sparc64
@@ -211,6 +227,11 @@ task :import_mipsel => [] do
         :chdir => "mipsel"
 end
 
+task :import_powerpc => [] do
+    sh "vagrant box add --force --name #{BOX_NAMESPACE}/#{BOX_BASENAME_POWERPC} #{BOX_POWERPC}",
+        :chdir => "powerpc"
+end
+
 task :import_ppc64 => [] do
     sh "vagrant box add --force --name #{BOX_NAMESPACE}/#{BOX_BASENAME_PPC64} #{BOX_PPC64}",
         :chdir => "ppc64"
@@ -234,6 +255,7 @@ task :import => [
     :import_hppa,
     :import_mips64el,
     :import_mipsel,
+    :import_powerpc,
     :import_ppc64,
     :import_ppc64el,
     :import_sparc64
@@ -310,6 +332,16 @@ task :test_mipsel => [
         :chdir => "mipsel#{File::SEPARATOR}test"
 end
 
+task :test_powerpc => [
+    "powerpc#{File::SEPARATOR}test#{File::SEPARATOR}Vagrantfile",
+    "powerpc#{File::SEPARATOR}test#{File::SEPARATOR}hello.cpp"
+] do
+    sh 'vagrant up',
+        :chdir => "powerpc#{File::SEPARATOR}test"
+    sh 'vagrant ssh -c "cd /vagrant && powerpc-linux-gnu-g++ -o hello hello.cpp && qemu-ppc-static hello"',
+        :chdir => "powerpc#{File::SEPARATOR}test"
+end
+
 task :test_ppc64 => [
     "ppc64#{File::SEPARATOR}test#{File::SEPARATOR}Vagrantfile",
     "ppc64#{File::SEPARATOR}test#{File::SEPARATOR}hello.cpp"
@@ -348,6 +380,7 @@ task :test => [
     :test_hppa,
     :test_mips64el,
     :test_mipsel,
+    :test_powerpc,
     :test_ppc64,
     :test_ppc64el,
     :test_sparc64
@@ -389,6 +422,11 @@ task :publish_mipsel => [] do
         :chdir => "mipsel"
 end
 
+task :publish_powerpc => [] do
+    sh "vagrant cloud publish #{BOX_NAMESPACE}/#{BOX_BASENAME_POWERPC} --force --release --short-description \"#{SHORT_DESCRIPTION_POWERPC}\" --version-description \"#{VERSION_DESCRIPTION}\" #{VERSION} #{PROVIDER} #{BOX_POWERPC}",
+        :chdir => "powerpc"
+end
+
 task :publish_ppc64 => [] do
     sh "vagrant cloud publish #{BOX_NAMESPACE}/#{BOX_BASENAME_PPC64} --force --release --short-description \"#{SHORT_DESCRIPTION_PPC64}\" --version-description \"#{VERSION_DESCRIPTION}\" #{VERSION} #{PROVIDER} #{BOX_PPC64}",
         :chdir => "ppc64"
@@ -412,6 +450,7 @@ task :publish => [
     :publish_hppa,
     :publish_mips64el,
     :publish_mipsel,
+    :publish_powerpc,
     :publish_ppc64,
     :publish_ppc64el,
     :publish_sparc64
@@ -446,6 +485,10 @@ task :clean_box_mipsel => [] do
     Dir.glob("mipsel#{File::SEPARATOR}*.box").each { |path| File.delete path }
 end
 
+task :clean_box_powerpc => [] do
+    Dir.glob("powerpc#{File::SEPARATOR}*.box").each { |path| File.delete path }
+end
+
 task :clean_box_ppc64 => [] do
     Dir.glob("ppc64#{File::SEPARATOR}*.box").each { |path| File.delete path }
 end
@@ -466,6 +509,7 @@ task :clean_boxes => [
     :clean_box_hppa,
     :clean_box_mips64el,
     :clean_box_mipsel,
+    :clean_box_powerpc,
     :clean_box_ppc64,
     :clean_box_ppc64el,
     :clean_box_sparc64
@@ -640,6 +684,30 @@ task :clean_mipsel => [:clean_box_mipsel] do
     end
 end
 
+task :clean_powerpc => [:clean_box_powerpc] do
+    begin
+        sh 'vagrant destroy -f',
+            :chdir => 'powerpc'
+    rescue
+    end
+
+    begin
+        sh 'vagrant destroy -f',
+            :chdir => "powerpc#{File::SEPARATOR}test"
+    rescue
+    end
+
+    begin
+        Dir.glob("powerpc#{File::SEPARATOR}**#{File::SEPARATOR}.vagrant").each { |path| FileUtils.rm_r path }
+    rescue
+    end
+
+    begin
+        FileUtils.rm_r "powerpc#{File::SEPARATOR}_tmp_package"
+    rescue
+    end
+end
+
 task :clean_ppc64 => [:clean_box_ppc64] do
     begin
         sh 'vagrant destroy -f',
@@ -720,6 +788,7 @@ task :clean => [
     :clean_hppa,
     :clean_mips64el,
     :clean_mipsel,
+    :clean_powerpc,
     :clean_ppc64,
     :clean_ppc64el,
     :clean_sparc64
