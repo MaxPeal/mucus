@@ -12,6 +12,7 @@ BOX_BASENAME_MIPS64EL = "#{BOX_BASENAME}-mips64el"
 BOX_BASENAME_MIPSEL = "#{BOX_BASENAME}-mipsel"
 BOX_BASENAME_PPC64 = "#{BOX_BASENAME}-ppc64"
 BOX_BASENAME_PPC64EL = "#{BOX_BASENAME}-ppc64el"
+BOX_BASENAME_S390 = "#{BOX_BASENAME}-s390"
 BOX_BASENAME_SPARC64 = "#{BOX_BASENAME}-sparc64"
 
 BOX_ALPHA = "#{BOX_BASENAME_ALPHA}.box"
@@ -23,6 +24,7 @@ BOX_MIPS64EL = "#{BOX_BASENAME_MIPS64EL}.box"
 BOX_MIPSEL = "#{BOX_BASENAME_MIPSEL}.box"
 BOX_PPC64 = "#{BOX_BASENAME_PPC64}.box"
 BOX_PPC64EL = "#{BOX_BASENAME_PPC64EL}.box"
+BOX_S390 = "#{BOX_BASENAME_S390}.box"
 BOX_SPARC64 = "#{BOX_BASENAME_SPARC64}.box"
 
 SHORT_DESCRIPTION = 'a portable cross-compiler, cross-tester VM for GNU/Linux'
@@ -36,6 +38,7 @@ SHORT_DESCRIPTION_MIPS64EL = "#{SHORT_DESCRIPTION} mips64el"
 SHORT_DESCRIPTION_MIPSEL = "#{SHORT_DESCRIPTION} mipsel"
 SHORT_DESCRIPTION_PPC64 = "#{SHORT_DESCRIPTION} ppc64"
 SHORT_DESCRIPTION_PPC64EL = "#{SHORT_DESCRIPTION} ppc64el"
+SHORT_DESCRIPTION_S390 = "#{SHORT_DESCRIPTION} s390"
 SHORT_DESCRIPTION_SPARC64 = "#{SHORT_DESCRIPTION} sparc64"
 
 VERSION_DESCRIPTION = 'Source: https://github.com/mcandre/mucus'
@@ -150,6 +153,18 @@ task :box_ppc64el => [
         :chdir => "ppc64el"
 end
 
+task :box_s390 => [
+    "s390#{File::SEPARATOR}Vagrantfile",
+    "s390#{File::SEPARATOR}bootstrap.sh",
+    "s390#{File::SEPARATOR}export.Vagrantfile",
+    :clean_box_s390
+] do
+    sh 'vagrant up',
+        :chdir => "s390"
+    sh "vagrant package --output #{BOX_S390} --vagrantfile export.Vagrantfile",
+        :chdir => "s390"
+end
+
 task :box_sparc64 => [
     "sparc64#{File::SEPARATOR}Vagrantfile",
     "sparc64#{File::SEPARATOR}bootstrap.sh",
@@ -172,6 +187,7 @@ task :boxes => [
     :box_mipsel,
     :box_ppc64,
     :box_ppc64el,
+    :box_s390,
     :box_sparc64
 ] do
 end
@@ -221,6 +237,11 @@ task :import_ppc64el => [] do
         :chdir => "ppc64el"
 end
 
+task :import_s390 => [] do
+    sh "vagrant box add --force --name #{BOX_NAMESPACE}/#{BOX_BASENAME_S390} #{BOX_S390}",
+        :chdir => "s390"
+end
+
 task :import_sparc64 => [] do
     sh "vagrant box add --force --name #{BOX_NAMESPACE}/#{BOX_BASENAME_SPARC64} #{BOX_SPARC64}",
         :chdir => "sparc64"
@@ -236,6 +257,7 @@ task :import => [
     :import_mipsel,
     :import_ppc64,
     :import_ppc64el,
+    :import_s390,
     :import_sparc64
 ] do
 end
@@ -330,6 +352,16 @@ task :test_ppc64el => [
         :chdir => "ppc64el#{File::SEPARATOR}test"
 end
 
+task :test_s390 => [
+    "s390#{File::SEPARATOR}test#{File::SEPARATOR}Vagrantfile",
+    "s390#{File::SEPARATOR}test#{File::SEPARATOR}hello.cpp"
+] do
+    sh 'vagrant up',
+        :chdir => "s390#{File::SEPARATOR}test"
+    sh 'vagrant ssh -c "cd /vagrant && s390-linux-gnu-g++ -o hello hello.cpp && qemu-s390-static hello"',
+        :chdir => "s390#{File::SEPARATOR}test"
+end
+
 task :test_sparc64 => [
     "sparc64#{File::SEPARATOR}test#{File::SEPARATOR}Vagrantfile",
     "sparc64#{File::SEPARATOR}test#{File::SEPARATOR}hello.cpp"
@@ -350,6 +382,7 @@ task :test => [
     :test_mipsel,
     :test_ppc64,
     :test_ppc64el,
+    :test_s390,
     :test_sparc64
 ] do
 end
@@ -399,6 +432,11 @@ task :publish_ppc64el => [] do
         :chdir => "ppc64el"
 end
 
+task :publish_s390 => [] do
+    sh "vagrant cloud publish #{BOX_NAMESPACE}/#{BOX_BASENAME_S390} --force --release --short-description \"#{SHORT_DESCRIPTION_S390}\" --version-description \"#{VERSION_DESCRIPTION}\" #{VERSION} #{PROVIDER} #{BOX_S390}",
+        :chdir => "s390"
+end
+
 task :publish_sparc64 => [] do
     sh "vagrant cloud publish #{BOX_NAMESPACE}/#{BOX_BASENAME_SPARC64} --force --release --short-description \"#{SHORT_DESCRIPTION_SPARC64}\" --version-description \"#{VERSION_DESCRIPTION}\" #{VERSION} #{PROVIDER} #{BOX_SPARC64}",
         :chdir => "sparc64"
@@ -414,6 +452,7 @@ task :publish => [
     :publish_mipsel,
     :publish_ppc64,
     :publish_ppc64el,
+    :publish_s390,
     :publish_sparc64
 ] do
 end
@@ -454,6 +493,10 @@ task :clean_box_ppc64el => [] do
     Dir.glob("ppc64el#{File::SEPARATOR}*.box").each { |path| File.delete path }
 end
 
+task :clean_box_s390 => [] do
+    Dir.glob("s390#{File::SEPARATOR}*.box").each { |path| File.delete path }
+end
+
 task :clean_box_sparc64 => [] do
     Dir.glob("sparc64#{File::SEPARATOR}*.box").each { |path| File.delete path }
 end
@@ -468,6 +511,7 @@ task :clean_boxes => [
     :clean_box_mipsel,
     :clean_box_ppc64,
     :clean_box_ppc64el,
+    :clean_box_s390,
     :clean_box_sparc64
 ] do
 end
@@ -688,6 +732,30 @@ task :clean_ppc64el => [:clean_box_ppc64el] do
     end
 end
 
+task :clean_s390 => [:clean_box_s390] do
+    begin
+        sh 'vagrant destroy -f',
+            :chdir => 's390'
+    rescue
+    end
+
+    begin
+        sh 'vagrant destroy -f',
+            :chdir => "s390#{File::SEPARATOR}test"
+    rescue
+    end
+
+    begin
+        Dir.glob("s390#{File::SEPARATOR}**#{File::SEPARATOR}.vagrant").each { |path| FileUtils.rm_r path }
+    rescue
+    end
+
+    begin
+        FileUtils.rm_r "s390#{File::SEPARATOR}_tmp_package"
+    rescue
+    end
+end
+
 task :clean_sparc64 => [:clean_box_sparc64] do
     begin
         sh 'vagrant destroy -f',
@@ -722,6 +790,7 @@ task :clean => [
     :clean_mipsel,
     :clean_ppc64,
     :clean_ppc64el,
+    :clean_s390,
     :clean_sparc64
 ] do
 end
