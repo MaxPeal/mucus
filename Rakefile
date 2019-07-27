@@ -15,6 +15,7 @@ BOX_BASENAME_PPC64 = "#{BOX_BASENAME}-ppc64"
 BOX_BASENAME_PPC64EL = "#{BOX_BASENAME}-ppc64el"
 BOX_BASENAME_RISCV64 = "#{BOX_BASENAME}-riscv64"
 BOX_BASENAME_SPARC64 = "#{BOX_BASENAME}-sparc64"
+BOX_BASENAME_X32 = "#{BOX_BASENAME}-x32"
 
 BOX_ALPHA = "#{BOX_BASENAME_ALPHA}.box"
 BOX_ARM64 = "#{BOX_BASENAME_ARM64}.box"
@@ -28,6 +29,7 @@ BOX_PPC64 = "#{BOX_BASENAME_PPC64}.box"
 BOX_PPC64EL = "#{BOX_BASENAME_PPC64EL}.box"
 BOX_RISCV64 = "#{BOX_BASENAME_RISCV64}.box"
 BOX_SPARC64 = "#{BOX_BASENAME_SPARC64}.box"
+BOX_X32 = "#{BOX_BASENAME_X32}.box"
 
 SHORT_DESCRIPTION = 'a portable cross-compiler, cross-tester VM for GNU/Linux'
 
@@ -43,6 +45,7 @@ SHORT_DESCRIPTION_PPC64 = "#{SHORT_DESCRIPTION} ppc64"
 SHORT_DESCRIPTION_PPC64EL = "#{SHORT_DESCRIPTION} ppc64el"
 SHORT_DESCRIPTION_RISCV64 = "#{SHORT_DESCRIPTION} riscv64"
 SHORT_DESCRIPTION_SPARC64 = "#{SHORT_DESCRIPTION} sparc64"
+SHORT_DESCRIPTION_X32 = "#{SHORT_DESCRIPTION} x32"
 
 VERSION_DESCRIPTION = 'Source: https://github.com/mcandre/mucus'
 
@@ -192,6 +195,18 @@ task :box_sparc64 => [
         :chdir => "sparc64"
 end
 
+task :box_x32 => [
+    "x32#{File::SEPARATOR}Vagrantfile",
+    "x32#{File::SEPARATOR}bootstrap.sh",
+    "x32#{File::SEPARATOR}export.Vagrantfile",
+    :clean_box_x32
+] do
+    sh 'vagrant up',
+        :chdir => "x32"
+    sh "vagrant package --output #{BOX_X32} --vagrantfile export.Vagrantfile",
+        :chdir => "x32"
+end
+
 task :boxes => [
     :box_alpha,
     :box_arm64,
@@ -204,7 +219,8 @@ task :boxes => [
     :box_ppc64,
     :box_ppc64el,
     :box_riscv64,
-    :box_sparc64
+    :box_sparc64,
+    :box_x32
 ] do
 end
 
@@ -268,6 +284,11 @@ task :import_sparc64 => [] do
         :chdir => "sparc64"
 end
 
+task :import_x32 => [] do
+    sh "vagrant box add --force --name #{BOX_NAMESPACE}/#{BOX_BASENAME_X32} #{BOX_X32}",
+        :chdir => "x32"
+end
+
 task :import => [
     :import_alpha,
     :import_arm64,
@@ -280,7 +301,8 @@ task :import => [
     :import_ppc64,
     :import_ppc64el,
     :import_riscv64,
-    :import_sparc64
+    :import_sparc64,
+    :import_x32
 ] do
 end
 
@@ -404,6 +426,16 @@ task :test_sparc64 => [
         :chdir => "sparc64#{File::SEPARATOR}test"
 end
 
+task :test_x32 => [
+    "x32#{File::SEPARATOR}test#{File::SEPARATOR}Vagrantfile",
+    "x32#{File::SEPARATOR}test#{File::SEPARATOR}hello.cpp"
+] do
+    sh 'vagrant up',
+        :chdir => "x32#{File::SEPARATOR}test"
+    sh 'vagrant ssh -c "cd /vagrant && x86_64-linux-gnux32-g++ -o hello hello.cpp && ./hello"',
+        :chdir => "x32#{File::SEPARATOR}test"
+end
+
 task :test => [
     :test_alpha,
     :test_arm64,
@@ -416,7 +448,8 @@ task :test => [
     :test_ppc64,
     :test_ppc64el,
     :test_riscv64,
-    :test_sparc64
+    :test_sparc64,
+    :test_x32
 ] do
 end
 
@@ -480,6 +513,11 @@ task :publish_sparc64 => [] do
         :chdir => "sparc64"
 end
 
+task :publish_x32 => [] do
+    sh "vagrant cloud publish #{BOX_NAMESPACE}/#{BOX_BASENAME_X32} --force --release --short-description \"#{SHORT_DESCRIPTION_X32}\" --version-description \"#{VERSION_DESCRIPTION}\" #{VERSION} #{PROVIDER} #{BOX_X32}",
+        :chdir => "x32"
+end
+
 task :publish => [
     :publish_alpha,
     :publish_arm64,
@@ -492,7 +530,8 @@ task :publish => [
     :publish_ppc64,
     :publish_ppc64el,
     :publish_riscv64,
-    :publish_sparc64
+    :publish_sparc64,
+    :publish_x32
 ] do
 end
 
@@ -544,6 +583,10 @@ task :clean_box_sparc64 => [] do
     Dir.glob("sparc64#{File::SEPARATOR}*.box").each { |path| File.delete path }
 end
 
+task :clean_box_x32 => [] do
+    Dir.glob("x32#{File::SEPARATOR}*.box").each { |path| File.delete path }
+end
+
 task :clean_boxes => [
     :clean_box_alpha,
     :clean_box_arm64,
@@ -556,7 +599,8 @@ task :clean_boxes => [
     :clean_box_ppc64,
     :clean_box_ppc64el,
     :clean_box_riscv64,
-    :clean_box_sparc64
+    :clean_box_sparc64,
+    :clean_box_x32
 ] do
 end
 
@@ -848,6 +892,30 @@ task :clean_sparc64 => [:clean_box_sparc64] do
     end
 end
 
+task :clean_x32 => [:clean_box_x32] do
+    begin
+        sh 'vagrant destroy -f',
+            :chdir => 'x32'
+    rescue
+    end
+
+    begin
+        sh 'vagrant destroy -f',
+            :chdir => "x32#{File::SEPARATOR}test"
+    rescue
+    end
+
+    begin
+        Dir.glob("x32#{File::SEPARATOR}**#{File::SEPARATOR}.vagrant").each { |path| FileUtils.rm_r path }
+    rescue
+    end
+
+    begin
+        FileUtils.rm_r "x32#{File::SEPARATOR}_tmp_package"
+    rescue
+    end
+end
+
 task :clean => [
     :clean_alpha,
     :clean_arm64,
@@ -860,6 +928,7 @@ task :clean => [
     :clean_ppc64,
     :clean_ppc64el,
     :clean_riscv64,
-    :clean_sparc64
+    :clean_sparc64,
+    :clean_x32
 ] do
 end
