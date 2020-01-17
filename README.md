@@ -41,7 +41,7 @@ mucus offers cross-compilation and cross-testing of GNU/Linux binaries with conv
 
 * [VirtualBox](https://www.virtualbox.org/)
 * [vagrant-rsync-back](https://github.com/smerrill/vagrant-rsync-back)
-* [Ruby](https://www.ruby-lang.org/en/) (for rake)
+* [Ruby](https://www.ruby-lang.org/en/) 2.4+ (with rake 12+)
 
 # BUILD AND TEST BOXES
 
