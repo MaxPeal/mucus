@@ -16,10 +16,12 @@ Hello World!
 # VAGRANT CLOUD
 
 * https://app.vagrantup.com/mcandre/boxes/mucus-alpha
+* https://app.vagrantup.com/mcandre/boxes/mucus-amd64
 * https://app.vagrantup.com/mcandre/boxes/mucus-arm64
 * https://app.vagrantup.com/mcandre/boxes/mucus-armel
 * https://app.vagrantup.com/mcandre/boxes/mucus-armhf
 * https://app.vagrantup.com/mcandre/boxes/mucus-hppa
+* https://app.vagrantup.com/mcandre/boxes/mucus-i386
 * https://app.vagrantup.com/mcandre/boxes/mucus-mips64el
 * https://app.vagrantup.com/mcandre/boxes/mucus-mipsel
 * https://app.vagrantup.com/mcandre/boxes/mucus-powerpc
@@ -41,7 +43,7 @@ mucus offers cross-compilation and cross-testing of GNU/Linux binaries with conv
 
 * [VirtualBox](https://www.virtualbox.org/)
 * [vagrant-rsync-back](https://github.com/smerrill/vagrant-rsync-back)
-* [Ruby](https://www.ruby-lang.org/en/) 2.4+ (with rake 12+)
+* [Ruby](https://www.ruby-lang.org/en/) 2.7.2+ (for rake)
 
 # BUILD AND TEST BOXES
 
