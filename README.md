@@ -68,4 +68,5 @@ $ rake clean
 * [factorio](https://github.com/mcandre/factorio) generates Go application ports based on the standard Go toolchain
 * [tonixxx](https://github.com/mcandre/tonixxx) provides additional operating system and architecture targets
 * [trust](https://github.com/japaric/trust) integrates CI systems with Rust ports.
+* [WASM](https://webassembly.org/) provides a portable interface for C/C++ code.
 * [xgo](https://github.com/karalabe/xgo) automates cross-compiling Go applications, including cgo apps with native dependencies.
