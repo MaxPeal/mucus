@@ -67,6 +67,7 @@ $ rake clean
 
 * [factorio](https://github.com/mcandre/factorio) generates Go application ports based on the standard Go toolchain
 * [LLVM](https://llvm.org/) bitcode offers an abstract assembler format for C/C++ code.
+* [snek](https://github.com/mcandre/snek) generates C/C++ application ports using a leaner, Docker-based approacha
 * [tonixxx](https://github.com/mcandre/tonixxx) provides additional operating system and architecture targets
 * [trust](https://github.com/japaric/trust) integrates CI systems with Rust ports.
 * [WASM](https://webassembly.org/) provides a portable interface for C/C++ code.
